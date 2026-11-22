@@ -5,7 +5,7 @@ Reads --speculative-config JSON from sys.argv, applies the adaptive policy
 from vllm.models.hy_v4.nvidia.dfly_adaptive (VLLM_HY4_DFLY_* env knobs),
 rewrites argv, and exec's the vllm OpenAI entrypoint.
 
-Used by /home/jaita/hy4_tp1_spec_adaptive.sh.
+Used by hy4-serve.sh.
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import sys
 
 def main() -> None:
     # Make the overlay importable.
-    overlay = os.environ.get("PYTHONPATH", "/home/jaita/hy4serve/site-packages")
+    overlay = os.environ.get("PYTHONPATH", "/opt/hy4-serve/site-packages")
     if overlay not in sys.path:
         sys.path.insert(0, overlay)
 

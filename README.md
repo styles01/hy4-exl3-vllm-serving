@@ -14,7 +14,12 @@ model in [`styles01/tensorfold-hy4-cuda`](https://github.com/styles01/tensorfold
 
 - **16.1 tok/s** coherent single-stream decode (no spec), 240–420 ms TTFT
 - **34.3 tok/s aggregate** at c3 concurrency (256K max context)
-- **Spec decode (DFly2) fixed + measured:** acceptance 1.96 at depth 3 with the scale fix → 16.9 tok/s (only depth that beats no-spec; depths 1/2/4/7 slower — table below)
+- **Spec decode (DFly2) now works:** the drafter's fp8-native linears needed the checkpoint
+  `.weight_scale_inv` params installed at load (fixed in this overlay's `dfly.py`). Best static
+  depth on GB10 = 3 (~+16–19% on 2k-token generations; other depths lose — see the depth table in
+  `runbooks/hy4-flash-exl3-dfly-adaptive-spec.md`). The **adaptive-depth lane** (dsv41-style cost
+  table + boot-time chooser) is our production lane: **up to 21.4 tok/s**, full container at
+  `ghcr.io/styles01/hy4-exl3-dfly:v1`.
 
 ## What this overlay is
 

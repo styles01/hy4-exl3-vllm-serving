@@ -3,8 +3,8 @@ import glob, os, json
 from safetensors.torch import save_file, load_file
 
 torch.set_grad_enabled(False)
-src = '/home/jaita/MODELS/Hy4-flash/exl3-3.0bpw-clean'
-dst = '/home/jaita/MODELS/Hy4-flash/exl3-3.0bpw-fp8lin'
+src = '$MODEL_ROOT/Hy4-flash/exl3-3.0bpw-clean'
+dst = '$MODEL_ROOT/Hy4-flash/exl3-3.0bpw-fp8lin'
 
 want_sub = ("routed_expert_down_proj", "routed_expert_up_proj", "shared_experts",
             "kv_b_proj", "self_attn.q_a_proj", "self_attn.kv_a_proj_with_mqa",

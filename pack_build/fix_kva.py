@@ -1,8 +1,8 @@
 import torch, glob, os
 from safetensors.torch import save_file, load_file
 torch.set_grad_enabled(False)
-clean = '/home/jaita/MODELS/Hy4-flash/exl3-3.0bpw-clean'
-dst = '/home/jaita/MODELS/Hy4-flash/exl3-3.0bpw-fp8lin'
+clean = '$MODEL_ROOT/Hy4-flash/exl3-3.0bpw-clean'
+dst = '$MODEL_ROOT/Hy4-flash/exl3-3.0bpw-fp8lin'
 restored = 0
 for clean_f in sorted(glob.glob(clean + '/model-*.safetensors')):
     src_t = load_file(clean_f)

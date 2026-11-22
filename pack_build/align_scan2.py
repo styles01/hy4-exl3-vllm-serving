@@ -1,7 +1,7 @@
 import torch, glob
 from safetensors.torch import load_file
 torch.set_grad_enabled(False)
-src = '/home/jaita/MODELS/Hy4-flash/exl3-3.0bpw-fp8lin'
+src = '$MODEL_ROOT/Hy4-flash/exl3-3.0bpw-fp8lin'
 bad = []
 for f in sorted(glob.glob(src + '/model-*.safetensors')):
     t = load_file(f)
