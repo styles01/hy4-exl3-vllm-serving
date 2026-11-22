@@ -14,7 +14,7 @@ model in [`styles01/tensorfold-hy4-cuda`](https://github.com/styles01/tensorfold
 
 - **16.1 tok/s** coherent single-stream decode (no spec), 240–420 ms TTFT
 - **34.3 tok/s aggregate** at c3 concurrency (256K max context)
-- speculative decoding (DFly2) currently **net-negative**: acceptance length 1.00 — see "known bugs"
+- **Spec decode (DFly2) fixed + measured:** acceptance 1.96 at depth 3 with the scale fix → 16.9 tok/s (only depth that beats no-spec; depths 1/2/4/7 slower — table below)
 
 ## What this overlay is
 
@@ -71,11 +71,14 @@ Result: `exl3-3.0bpw-fp8lin`. Without this, every BF16-stored dense linear runs 
 
 ## Known bugs / in-progress
 
-- **DFly2 spec drafter** (`vllm/models/hy_v4/nvidia/dfly.py`): the drafter's compressed-tensors
-  fp8 params compute with **init-default scale values** (unit) rather than checkpoint blockwise
-  scales → acceptance length 1.00. The MTP draft path (`mtp.py`) already maps `.scale` →
-  `.weight_scale_inv`; the same mapping needs to be done for the DFly modules. Status: fix in
-  progress on our side; PRs/pings welcome — this is the last blocker for spec.
+- **DFly2 spec drafter — FIXED.** The drafter's compressed-tensors fp8 linears were computing with
+  init-default (unit) scale params because `load_weights` swallowed the checkpoint's
+  `.weight_scale_inv` keys (recorded into a scratch dict and never installed). Fix: let the
+  fp8-typed linears receive the checkpoint scales as runtime params (39 block-scale tensors now
+  land). Acceptance 1.00 → 1.8–2.2 verified on GB10. Depth sweep on the 3.0-bpw pack (temperature
+  0, benchone prompt): depth 1 = 12.5 t/s · 2 = 10.9 · **3 = 16.9 (beats no-spec)** · 4 = 9.2 ·
+  7 = 7.5. Spec only pays at depth 3 on this stack; the dsv41-style adaptive policy (measured
+  per-depth round cost table + early-exit) is the next lever.
 - If you hit `Unknown Flash checkpoint weight: layers.0.*` style errors: layer 0 uses dense BF16
   attn/mlp in this architecture — the matcher deliberately excludes layer-0 linears from FP8.
 
