@@ -102,3 +102,28 @@ sparkrun-recipes.
 
 License: follow the container image's license terms; all local modifications Apache-2.0 where
 applicable.
+
+## 2026-11-24: Q4-engram serving (RAM-safe) — verified clean
+
+The four Engram tables (126.7 GB BF16 in-shard) spike host RAM through the page cache on
+gb10 unified memory and wedge the box. The fix ladder: **quantize the tables to Q4**
+(54 B/row ggml q4_0, 126.7 -> 35.6 GB, cosine 0.9963 vs BF16), keep them on **local NVMe**
+(not NFS — NFS caches reads on the server), and stream rows with `preadv` +
+`posix_fadvise(DONTNEED)` per row (page cache stays flat: 4000 rows -> 64 MB delta).
+Verified on one Spark: clean decode, host RAM bounded ~93/121 GB.
+
+Serving gotchas that cause silent corruption if skipped (each cost us a session):
+- serve with `--quantization exl3` and the `hy_v4` reasoning/tool parsers; a boot
+  without these falls back to a legacy dequant path whose output is token soup
+- `VLLM_FLASH_FP8_NONEXPERT=1` (+`FP8_ALL=1`) and `CUTE_DSL_ARCH=sm_121a`,
+  `EXL3_FUSED_MOE=1`, `VLLM_USE_DEEP_GEMM=0` must be set (baked entry.sh does this;
+  custom entrypoints must export them explicitly)
+- patched overlay files must be **bind-mounted** into the container; the image runs
+  its own internal site-packages otherwise
+- exllamav3_ext JIT needs the CUDA headers (bind a cusparse-complete include dir) and
+  `TORCH_CUDA_ARCH_LIST=12.1a`; keep the built extension in a bind-mounted cache so
+  boots do not rebuild (a mismatched rebuild is another garble source)
+- `--enforce-eager` for now: CUDA graph capture is incompatible with the CPU row
+  staging (fix = pinned staging buffer, see TandemEngine engine/disk_cache.py)
+
+Full recipe: sparkrun-recipes/runbooks/hy4-flash-exl3-q4engram-serving.md (6e0577f).
